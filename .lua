@@ -90,6 +90,14 @@ if targetButton then
     end
 end
 
+local player = game.Players.LocalPlayer
+local confettiStage = player:WaitForChild("PlayerGui"):WaitForChild("GameGui"):FindFirstChild("ConfettiStage")
+
+if confettiStage then
+    confettiStage:Destroy()
+end
+
+
 
 
 --speed
