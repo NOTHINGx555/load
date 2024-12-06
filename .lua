@@ -812,7 +812,7 @@ local Dropdown = Tabs.emote:AddDropdown("EmoteDropdown", {
 
 -- Toggle for enabling the emote loop
 local Toggle = Tabs.emote:AddToggle("EmoteLoopToggle", {
-    Title = "Enable Emote",
+    Title = "Enable Emote (Three)",
     Default = false
 })
 
@@ -832,19 +832,33 @@ Dropdown:OnChanged(function(Value)
         if emoteId then
             PlayEmote(emoteId)
         end
-    else
-    
     end
 end)
 
 -- Toggle change event (for future extension)
 Toggle:OnChanged(function(Value)
-    if Value then
-
-    else
-
-    end
+    -- No print statements, just handle the toggle change here
 end)
+
+-- Keybind to play selected emote (e.g., "P" key)
+local UserInputService = game:GetService("UserInputService")
+local keybind = Enum.KeyCode.Three  -- Change to any key you prefer
+
+-- Function to handle key press
+local function onKeyPress(input, gameProcessedEvent)
+    if gameProcessedEvent then return end  -- Ignore if game processed the event (e.g., pressing inside a GUI)
+    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == keybind then
+        local selectedEmote = Dropdown.Value  -- Get selected emote name
+        local emoteId = OldEmoteIds[selectedEmote] or NewEmoteIds[selectedEmote]
+        if emoteId then
+            PlayEmote(emoteId)
+        end
+    end
+end
+
+-- Connect the function to detect key press
+UserInputService.InputBegan:Connect(onKeyPress)
+
 
 
 
