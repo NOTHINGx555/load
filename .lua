@@ -440,6 +440,7 @@ local Window = Fluent:CreateWindow({
 local Tabs = {
     tab2 = Window:AddTab({ Title = "Custom Hitbox", Icon = "play" }),
     Main = Window:AddTab({ Title = "Football Controls", Icon = "unlock" }),
+        emote = Window:AddTab({ Title = "Emotes", Icon = "unlock" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
@@ -776,6 +777,75 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         toggleControls()
     end
 end)
+
+-- Old Emote IDs
+local OldEmoteIds = {
+    ["Floss Dance"] = 5917570207,
+    ["Frosty Flair"] = 10214406616,
+}
+
+-- New Emote IDs
+local NewEmoteIds = {
+    ["Monkey"] = 3716636630,
+    ["Elton John Piano Jump"] = 11453096488,
+    ["Cower"] = 4940597758,
+    ["Happy"] = 4849499887,
+    ["Dizzy"] = 3934986896,
+}
+
+-- Combine old and new emote names for dropdown
+local EmoteNames = {}
+for name, _ in pairs(OldEmoteIds) do
+    table.insert(EmoteNames, name)
+end
+for name, _ in pairs(NewEmoteIds) do
+    table.insert(EmoteNames, name)
+end
+
+-- Dropdown for selecting emote
+local Dropdown = Tabs.emote:AddDropdown("EmoteDropdown", {
+    Title = "Select Emote",
+    Values = EmoteNames,
+    Multi = false,
+    Default = 1
+})
+
+-- Toggle for enabling the emote loop
+local Toggle = Tabs.emote:AddToggle("EmoteLoopToggle", {
+    Title = "Enable Emote",
+    Default = false
+})
+
+-- Function to play emote based on ID
+local function PlayEmote(emoteId)
+    local player = game.Players.LocalPlayer
+    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid:PlayEmoteAndGetAnimTrackById(emoteId)
+    end
+end
+
+-- Dropdown change event
+Dropdown:OnChanged(function(Value)
+    if Toggle.Value then  -- Only play emote if toggle is on
+        local emoteId = OldEmoteIds[Value] or NewEmoteIds[Value]  -- Check both old and new emotes
+        if emoteId then
+            PlayEmote(emoteId)
+        end
+    else
+    
+    end
+end)
+
+-- Toggle change event (for future extension)
+Toggle:OnChanged(function(Value)
+    if Value then
+
+    else
+
+    end
+end)
+
 
 
 InterfaceManager:SetLibrary(Fluent)
