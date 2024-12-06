@@ -59,6 +59,36 @@ end
 setGradient(energyBars:FindFirstChild("Power"), Color3.new(0, 0, 0), Color3.new(255, 0, 0)) -- Black to Red
 setGradient(energyBars:FindFirstChild("Stamina"), Color3.new(0, 0, 0), Color3.new(255, 255, 255)) -- Black to White
 
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local gameGui = playerGui:WaitForChild("GameGui")
+local party = gameGui:WaitForChild("Party")
+local topbarLayout = party:WaitForChild("TopbarLayout")
+local partyLayout = topbarLayout:WaitForChild("PartyLayout")
+local members = partyLayout:WaitForChild("Members")
+
+-- Szukamy odpowiedniego CircleButton
+local buttons = members:GetChildren()
+local targetButton
+
+for _, button in ipairs(buttons) do
+    if button.Name == "CircleButton" and button:FindFirstChild("Background") then
+        local background = button.Background
+        if background:FindFirstChild("PartyLeader") then
+            targetButton = button
+            break -- Znaleźliśmy właściwy przycisk, więc wychodzimy z pętli
+        end
+    end
+end
+
+-- Usuwamy PartyLeader
+if targetButton then
+    local background = targetButton.Background
+    local partyLeader = background:FindFirstChild("PartyLeader")
+    if partyLeader then
+        partyLeader:Destroy()
+    end
+end
 
 
 
