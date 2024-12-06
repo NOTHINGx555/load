@@ -105,7 +105,7 @@ local defaultSpeed = humanoid.WalkSpeed
 
 -- Boost prędkości
 local boostSpeed = 270
-local boostDuration = 0.35
+local boostDuration = 0.3
 local waitTime = 0.35
 local unblockDelay = 0.5  -- Opóźnienie przed odblokowaniem (np. 0.5 sekundy)
 
