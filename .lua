@@ -58,7 +58,7 @@ end
 -- Ustawienie gradientu dla Power i Stamina
 setGradient(energyBars:FindFirstChild("Power"), Color3.new(0, 0, 0), Color3.new(255, 0, 0)) -- Black to Red
 setGradient(energyBars:FindFirstChild("Stamina"), Color3.new(0, 0, 0), Color3.new(255, 255, 255)) -- Black to White
---delete
+--delete PartyLeader
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local gameGui = playerGui:WaitForChild("GameGui")
@@ -89,21 +89,7 @@ if targetButton then
         partyLeader:Destroy()
     end
 end
---delete
-local player = game.Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-local gameGui = playerGui:WaitForChild("GameGui")
 
-local confettiStage = gameGui:FindFirstChild("ConfettiStage")
-local competitive = gameGui:FindFirstChild("Competitive")
-
-if confettiStage then
-    confettiStage:Destroy()
-end
-
-if competitive then
-    competitive:Destroy()
-end
 
 
 
