@@ -807,7 +807,7 @@ UserInputService.InputBegan:Connect(onKeyPress)
 
 
 
-
+Window:SelectTab(1)
 InterfaceManager:SetLibrary(Fluent)
 InterfaceManager:SetFolder("FluentScriptHub")
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
