@@ -107,6 +107,7 @@ local unblockDelay = 0.5
 local canActivateBoost = true
 local isBoostActive = false
 local isKeyPressed = false
+local isTeleporting = false
 
 -- Funkcja do aktualizacji character i humanoid po respawnie
 local function onCharacterAdded(newCharacter)
@@ -152,8 +153,10 @@ end
 
 -- Funkcja do teleportowania piłek do pozycji na podstawie drużyny gracza
 local function teleportAllBalls()
-    local targetPosition
+    if isTeleporting then return end
+    isTeleporting = true
 
+    local targetPosition
     if player.Team then
         if player.Team.Name == "Home" then
             targetPosition = Vector3.new(2.010676682, 4.00001144, -186.170898)
@@ -162,19 +165,27 @@ local function teleportAllBalls()
         end
     end
 
-    if targetPosition then
-        local balls = findBalls()
-        for _, ball in pairs(balls) do
+    if not targetPosition then
+        warn("No valid team")
+        isTeleporting = false
+        return
+    end
+
+    local balls = findBalls()
+    for _, ball in pairs(balls) do
+        if ball:IsA("BasePart") then
             local success, errorMessage = pcall(function()
                 ball.CFrame = CFrame.new(targetPosition)
             end)
             if not success then
                 warn("Error teleporting ball: " .. errorMessage)
             end
+        else
+            warn("Invalid ball detected")
         end
-    else
-        warn("No team or target position found!")
     end
+
+    isTeleporting = false
 end
 
 -- Funkcja do teleportowania określonych obiektów z folderu "Junk" do pozycji gracza
@@ -235,13 +246,14 @@ player:GetPropertyChangedSignal("Team"):Connect(teleportAllBalls)
 -- Obsługa dodawania nowych piłek do Workspace
 Workspace.ChildAdded:Connect(function(child)
     if child:IsA("Part") and child.Name == "Football" then
-        wait(0.5)
+        child.AncestryChanged:Wait() -- Poczekaj, aż obiekt zostanie w pełni dodany
         teleportAllBalls()
     end
 end)
 
 -- Inicjalizacja
 onCharacterAdded(character)
+
 
 
 ---one good farming xp 2 players use same
