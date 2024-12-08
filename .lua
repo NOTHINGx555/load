@@ -12,7 +12,7 @@ end
 -- Referencje do GameGui
 local gameGui = playerGui:FindFirstChild("GameGui")
 if not gameGui then
-    print("-")
+    print("-error-")
     return
 end
 
@@ -396,8 +396,8 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 
 -- Create window
 local Window = Fluent:CreateWindow({
-    Title = "FR",
-    SubTitle = "",
+    Title = "NOTHING",
+    SubTitle = "super liga score",
     TabWidth = 150,
     Size = UDim2.fromOffset(550, 450),
     Acrylic = false,
