@@ -97,6 +97,8 @@ end
 
 --speed
 local player = game.Players.LocalPlayer
+
+-- Zmienne globalne
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 
@@ -107,13 +109,32 @@ local defaultSpeed = humanoid.WalkSpeed
 local boostSpeed = 270
 local boostDuration = 0.3
 local waitTime = 0.35
-local unblockDelay = 0.5  -- Opóźnienie przed odblokowaniem (np. 0.5 sekundy)
+local unblockDelay = 0.5 -- Opóźnienie przed odblokowaniem (np. 0.5 sekundy)
 
 -- Zmienna do zapobiegania spamowi
 local canActivateBoost = true
 
 -- Zmienna do sprawdzania, czy boost jest aktywny
 local isBoostActive = false
+
+-- Funkcja do aktualizacji character i humanoid po respawnie
+local function onCharacterAdded(newCharacter)
+    character = newCharacter
+    humanoid = character:WaitForChild("Humanoid")
+
+    -- Aktualizacja prędkości bazowej
+    defaultSpeed = humanoid.WalkSpeed
+
+    -- Obsługa blokowania skoku, gdy boost jest aktywny
+    humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
+        if isBoostActive then
+            humanoid.Jump = false -- Zapobiegaj skokom podczas boosta
+        end
+    end)
+end
+
+-- Zarejestruj zdarzenie dla nowych postaci
+player.CharacterAdded:Connect(onCharacterAdded)
 
 -- Funkcja do aktywowania boosta
 local function activateBoost()
@@ -127,11 +148,11 @@ local function activateBoost()
         wait(waitTime) -- Czeka przed ponowną aktywacją
         canActivateBoost = true -- Pozwól na kolejną aktywację
         isBoostActive = false -- Zresetuj flagę boosta
-        wait(unblockDelay)  -- Opóźnienie przed odblokowaniem akcji po zakończeniu boosta
+        wait(unblockDelay) -- Opóźnienie przed odblokowaniem akcji po zakończeniu boosta
     end
 end
 
--- Zablokowanie wejścia klawiszy Q i skoku, gdy boost jest aktywny
+-- Obsługa wejścia użytkownika
 local userInputService = game:GetService("UserInputService")
 
 userInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -154,12 +175,9 @@ userInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
--- Dodatkowo blokowanie skoku, kiedy boost jest aktywny
-humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
-    if isBoostActive then
-        humanoid.Jump = false -- Zapobiegaj skokom podczas boosta
-    end
-end)
+-- Wywołaj onCharacterAdded dla początkowej postaci
+onCharacterAdded(character)
+
 
 
 
