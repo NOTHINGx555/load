@@ -91,43 +91,28 @@ end
 
 
 
+--tp ball - gol - speed
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
---speed
-local player = game.Players.LocalPlayer
-
--- Zmienne globalne
+local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
-
--- Prędkość bazowa
 local defaultSpeed = humanoid.WalkSpeed
-
--- Boost prędkości
 local boostSpeed = 270
 local boostDuration = 0.3
 local waitTime = 0.35
-local unblockDelay = 0.5 -- Opóźnienie przed odblokowaniem (np. 0.5 sekundy)
-
--- Zmienna do zapobiegania spamowi
+local unblockDelay = 0.5
 local canActivateBoost = true
-
--- Zmienna do sprawdzania, czy boost jest aktywny
 local isBoostActive = false
+local isKeyPressed = false
 
 -- Funkcja do aktualizacji character i humanoid po respawnie
 local function onCharacterAdded(newCharacter)
     character = newCharacter
     humanoid = character:WaitForChild("Humanoid")
-
-    -- Aktualizacja prędkości bazowej
     defaultSpeed = humanoid.WalkSpeed
-
-    -- Obsługa blokowania skoku, gdy boost jest aktywny
-    humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
-        if isBoostActive then
-            humanoid.Jump = false -- Zapobiegaj skokom podczas boosta
-        end
-    end)
 end
 
 -- Zarejestruj zdarzenie dla nowych postaci
@@ -136,55 +121,20 @@ player.CharacterAdded:Connect(onCharacterAdded)
 -- Funkcja do aktywowania boosta
 local function activateBoost()
     if canActivateBoost then
-        canActivateBoost = false -- Zablokuj kolejne aktywacje
-        isBoostActive = true -- Ustaw flagę, że boost jest aktywny
-        wait(waitTime) -- Czeka przed aktywacją boosta
+        canActivateBoost = false
+        isBoostActive = true
+        wait(waitTime)
         humanoid.WalkSpeed = boostSpeed
         wait(boostDuration)
         humanoid.WalkSpeed = defaultSpeed
-        wait(waitTime) -- Czeka przed ponowną aktywacją
-        canActivateBoost = true -- Pozwól na kolejną aktywację
-        isBoostActive = false -- Zresetuj flagę boosta
-        wait(unblockDelay) -- Opóźnienie przed odblokowaniem akcji po zakończeniu boosta
+        wait(waitTime)
+        canActivateBoost = true
+        isBoostActive = false
+        wait(unblockDelay)
     end
 end
 
--- Obsługa wejścia użytkownika
-local userInputService = game:GetService("UserInputService")
-
-userInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        -- Opóźnienie przed blokowaniem klawisza Q
-        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Q and isBoostActive then
-            return Enum.ContextActionResult.Sink -- Zatrzymaj dalsze przetwarzanie tego wejścia
-        end
-        
-        -- Opóźnienie przed blokowaniem skoku
-        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space and isBoostActive then
-            humanoid.Jump = false -- Zatrzymaj skok, jeśli boost jest aktywny
-            return Enum.ContextActionResult.Sink -- Zatrzymaj dalsze przetwarzanie tego wejścia
-        end
-        
-        -- Aktywacja boosta przez naciśnięcie F
-        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.F then
-            activateBoost()
-        end
-    end
-end)
-
--- Wywołaj onCharacterAdded dla początkowej postaci
-onCharacterAdded(character)
-
-
-
---G gol
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local UserInputService = game:GetService("UserInputService")
-
-local Player = Players.LocalPlayer
-
--- Function to find all footballs in the Junk folder
+-- Funkcja do znajdowania piłek w folderze "Junk"
 local function findBalls()
     local junkFolder = Workspace:FindFirstChild("Junk")
     local balls = {}
@@ -200,100 +150,41 @@ local function findBalls()
     return balls
 end
 
--- Function to teleport all balls to the designated position based on the player's team
+-- Funkcja do teleportowania piłek do pozycji na podstawie drużyny gracza
 local function teleportAllBalls()
     local targetPosition
 
-    -- Dynamically determine the target position based on the player's team
-    if Player.Team then
-        if Player.Team.Name == "Home" then
+    if player.Team then
+        if player.Team.Name == "Home" then
             targetPosition = Vector3.new(2.010676682, 4.00001144, -186.170898)
-        elseif Player.Team.Name == "Away" then
+        elseif player.Team.Name == "Away" then
             targetPosition = Vector3.new(-0.214612424, 4.00001144, 186.203613)
         end
     end
 
     if targetPosition then
         local balls = findBalls()
-        if #balls > 0 then
-            for _, ball in pairs(balls) do
-                local success, errorMessage = pcall(function()
-                    ball.CFrame = CFrame.new(targetPosition)
-                end)
-                if not success then
-                    warn("Error teleporting ball: " .. errorMessage)
-                end
+        for _, ball in pairs(balls) do
+            local success, errorMessage = pcall(function()
+                ball.CFrame = CFrame.new(targetPosition)
+            end)
+            if not success then
+                warn("Error teleporting ball: " .. errorMessage)
             end
-        else
-            warn("No balls found!")
         end
     else
         warn("No team or target position found!")
     end
 end
 
--- Handle player respawn
-local function onPlayerRespawned()
-    local character = Player.Character or Player.CharacterAdded:Wait()
-    character:WaitForChild("HumanoidRootPart")
-    wait(0.1) -- Ensure everything is loaded
-    teleportAllBalls()
-end
-
--- Handle team changes
-local function onTeamChanged()
-    print("Player's team has changed!")
-    teleportAllBalls()
-end
-
--- Trigger teleportation when the user presses 'G'
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.G then
-        teleportAllBalls()
-    end
-end)
-
--- Connect to the player's respawn event
-Player.CharacterAdded:Connect(onPlayerRespawned)
-
--- Listen for team changes
-Player:GetPropertyChangedSignal("Team"):Connect(onTeamChanged)
-
--- Detect new footballs being added to the Workspace
-Workspace.ChildAdded:Connect(function(child)
-    if child:IsA("Part") and child.Name == "Football" then
-        wait(0.5) -- Small delay for synchronization
-        teleportAllBalls()
-    end
-end)
-
-
-
---spam left ctrl ball tp 
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
-
-local Player = Players.LocalPlayer
-
--- Flag to prevent duplicate key press handling
-local isKeyPressed = false
-
--- Function to move specific parts to the player's position
+-- Funkcja do teleportowania określonych obiektów z folderu "Junk" do pozycji gracza
 local function movePartsToPlayer()
     local junkFolder = Workspace:FindFirstChild("Junk")
-    
     if junkFolder and junkFolder:IsA("Folder") then
-        if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
-            local playerPosition = Player.Character.HumanoidRootPart.Position
-            
-            -- Loop through all parts in the Junk folder
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local playerPosition = player.Character.HumanoidRootPart.Position
             for _, obj in pairs(junkFolder:GetDescendants()) do
-                -- Check if the object is a part and matches the names
                 if obj:IsA("BasePart") and (obj.Name == "kick1" or obj.Name == "kick2" or obj.Name == "kick3" or obj.Name == "Football") then
-                    -- Set the position of the object to the player's position
                     obj.Position = playerPosition
                 end
             end
@@ -305,25 +196,52 @@ local function movePartsToPlayer()
     end
 end
 
--- Connect keybinds and events
+-- Obsługa klawiszy
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    -- Ignore if the input is already processed by the game
-    if gameProcessed then return end
+    if not gameProcessed then
+        -- Aktywacja boosta
+        if input.KeyCode == Enum.KeyCode.F then
+            activateBoost()
+        end
 
-    -- Check if the left or right control key is pressed
-    if (input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl) and not isKeyPressed then
-        isKeyPressed = true
-        -- Move parts to player
-        movePartsToPlayer()
+        -- Teleportowanie piłek
+        if input.KeyCode == Enum.KeyCode.G then
+            teleportAllBalls()
+        end
+
+        -- Teleportowanie obiektów do gracza
+        if (input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl) and not isKeyPressed then
+            isKeyPressed = true
+            movePartsToPlayer()
+        end
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    -- Reset the key press flag when the key is released
     if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl then
         isKeyPressed = false
     end
 end)
+
+-- Obsługa respawnu gracza
+player.CharacterAdded:Connect(function()
+    wait(0.1)
+    teleportAllBalls()
+end)
+
+-- Obsługa zmiany drużyny
+player:GetPropertyChangedSignal("Team"):Connect(teleportAllBalls)
+
+-- Obsługa dodawania nowych piłek do Workspace
+Workspace.ChildAdded:Connect(function(child)
+    if child:IsA("Part") and child.Name == "Football" then
+        wait(0.5)
+        teleportAllBalls()
+    end
+end)
+
+-- Inicjalizacja
+onCharacterAdded(character)
 
 
 ---one good farming xp 2 players use same
