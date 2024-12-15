@@ -102,56 +102,50 @@ local humanoid = character:WaitForChild("Humanoid")
 local defaultSpeed = humanoid.WalkSpeed
 local boostSpeed = 270
 local boostDuration = 0.3
-local waitTime = 0.35
+local debounceTime = 0.35
 local unblockDelay = 0.5
 local canActivateBoost = true
-local isBoostActive = false
-local isKeyPressed = false
 local isTeleporting = false
 
--- Funkcja do aktualizacji character i humanoid po respawnie
+-- Function to update character and humanoid on respawn
 local function onCharacterAdded(newCharacter)
     character = newCharacter
     humanoid = character:WaitForChild("Humanoid")
     defaultSpeed = humanoid.WalkSpeed
 end
-
--- Zarejestruj zdarzenie dla nowych postaci
 player.CharacterAdded:Connect(onCharacterAdded)
 
--- Funkcja do aktywowania boosta
+-- Function to activate boost
 local function activateBoost()
     if canActivateBoost then
         canActivateBoost = false
-        isBoostActive = true
-        wait(waitTime)
         humanoid.WalkSpeed = boostSpeed
-        wait(boostDuration)
+        task.wait(boostDuration)
         humanoid.WalkSpeed = defaultSpeed
-        wait(waitTime)
+        task.wait(debounceTime)
         canActivateBoost = true
-        isBoostActive = false
-        wait(unblockDelay)
+        task.wait(unblockDelay)
     end
 end
 
--- Funkcja do znajdowania piłek w folderze "Junk"
+-- Function to find all balls in the "Junk" folder
 local function findBalls()
     local junkFolder = Workspace:FindFirstChild("Junk")
-    local balls = {}
-    if junkFolder then
-        for _, obj in pairs(junkFolder:GetChildren()) do
-            if obj:IsA("Part") and obj.Name == "Football" then
-                table.insert(balls, obj)
-            end
-        end
-    else
+    if not junkFolder then
         warn("Junk folder not found!")
+        return {}
+    end
+
+    local balls = {}
+    for _, obj in ipairs(junkFolder:GetChildren()) do
+        if obj:IsA("Part") and obj.Name == "Football" then
+            table.insert(balls, obj)
+        end
     end
     return balls
 end
 
--- Funkcja do teleportowania piłek do pozycji na podstawie drużyny gracza
+-- Function to teleport all balls to the team's goal
 local function teleportAllBalls()
     if isTeleporting then return end
     isTeleporting = true
@@ -166,13 +160,13 @@ local function teleportAllBalls()
     end
 
     if not targetPosition then
-        warn("No valid team")
+        warn("No valid team position")
         isTeleporting = false
         return
     end
 
     local balls = findBalls()
-    for _, ball in pairs(balls) do
+    for _, ball in ipairs(balls) do
         if ball:IsA("BasePart") then
             local success, errorMessage = pcall(function()
                 ball.CFrame = CFrame.new(targetPosition)
@@ -188,70 +182,59 @@ local function teleportAllBalls()
     isTeleporting = false
 end
 
--- Funkcja do teleportowania określonych obiektów z folderu "Junk" do pozycji gracza
+-- Function to teleport specific objects to the player's position
 local function movePartsToPlayer()
     local junkFolder = Workspace:FindFirstChild("Junk")
-    if junkFolder and junkFolder:IsA("Folder") then
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local playerPosition = player.Character.HumanoidRootPart.Position
-            for _, obj in pairs(junkFolder:GetDescendants()) do
-                if obj:IsA("BasePart") and (obj.Name == "kick1" or obj.Name == "kick2" or obj.Name == "kick3" or obj.Name == "Football") then
-                    obj.Position = playerPosition
-                end
-            end
-        else
-            warn("Player character or HumanoidRootPart not found")
-        end
-    else
+    if not junkFolder or not junkFolder:IsA("Folder") then
         warn("Junk folder not found in Workspace")
+        return
+    end
+
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        warn("Player's HumanoidRootPart not found")
+        return
+    end
+
+    local playerPosition = rootPart.Position
+    for _, obj in ipairs(junkFolder:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name == "kick1" or obj.Name == "kick2" or obj.Name == "kick3" or obj.Name == "Football") then
+            obj.Position = playerPosition
+        end
     end
 end
 
--- Obsługa klawiszy
+-- Input handling
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        -- Aktywacja boosta
-        if input.KeyCode == Enum.KeyCode.F then
-            activateBoost()
-        end
+    if gameProcessed then return end
 
-        -- Teleportowanie piłek
-        if input.KeyCode == Enum.KeyCode.G then
-            teleportAllBalls()
-        end
-
-        -- Teleportowanie obiektów do gracza
-        if (input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl) and not isKeyPressed then
-            isKeyPressed = true
-            movePartsToPlayer()
-        end
+    if input.KeyCode == Enum.KeyCode.F then
+        activateBoost()
+    elseif input.KeyCode == Enum.KeyCode.G then
+        teleportAllBalls()
+    elseif input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl then
+        movePartsToPlayer()
     end
 end)
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl then
-        isKeyPressed = false
-    end
-end)
-
--- Obsługa respawnu gracza
+-- Handle respawn
 player.CharacterAdded:Connect(function()
-    wait(0.1)
+    task.wait(0.1)
     teleportAllBalls()
 end)
 
--- Obsługa zmiany drużyny
+-- Handle team changes
 player:GetPropertyChangedSignal("Team"):Connect(teleportAllBalls)
 
--- Obsługa dodawania nowych piłek do Workspace
+-- Handle new objects added to Workspace
 Workspace.ChildAdded:Connect(function(child)
     if child:IsA("Part") and child.Name == "Football" then
-        child.AncestryChanged:Wait() -- Poczekaj, aż obiekt zostanie w pełni dodany
+        task.wait(0.1)
         teleportAllBalls()
     end
 end)
 
--- Inicjalizacja
+-- Initialize the character
 onCharacterAdded(character)
 
 
